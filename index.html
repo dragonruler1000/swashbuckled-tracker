@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swashbuckled Companion</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="trade-data.js" defer></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+
+<header>
+    <h1>🏴‍☠️ Swashbuckled Companion</h1>
+</header>
+
+<main>
+
+    <!-- Dashboard -->
+    <section class="card">
+        <h2>Ship Ledger</h2>
+
+        <div class="ledger-grid">
+
+            <div>
+                <label for="cash">Cash on Hand</label>
+                <input
+                    type="number"
+                    id="cash"
+                    min="0"
+                    value="0">
+            </div>
+
+            <div>
+                <label>Ship Buyback Cost</label>
+                <div id="buybackCost" class="display-value">$0</div>
+            </div>
+
+            <div>
+                <label>Current Route</label>
+                <div id="routeNumber" class="display-value">1</div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- Current Route -->
+    <section class="card">
+
+        <h2>Current Trade Route</h2>
+
+        <div class="route-grid">
+
+            <div>
+                <label for="startContinent">Starting Continent</label>
+                <select id="startContinent">
+                    <option value="">Select...</option>
+                    <option value="1">1-Europe</option>
+                    <option value="2">2-Asia</option>
+                    <option value="3">3-North America</option>
+                    <option value="4">4-South America</option>
+                    <option value="5">5-Africa</option>
+                    <option value="6">6-Australia</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="startPort">Starting Port</label>
+                <input type="number" id="startPort" min="2" max="12">
+            </div>
+
+            <div>
+                <label for="destinationContinent">Destination Continent</label>
+                <select id="destinationContinent">
+                    <option value="">Select...</option>
+                    <option value="1">1-Europe</option>
+                    <option value="2">2-Asia</option>
+                    <option value="3">3-North America</option>
+                    <option value="4">4-South America</option>
+                    <option value="5">5-Africa</option>
+                    <option value="6">6-Australia</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="destinationPort">Destination Port</label>
+                <input type="number" id="destinationPort" min="2" max="12">
+            </div>
+
+            <div>
+                <label for="commodity">Commodity</label>
+                <select id="commodity">
+                    <option value="">Select...</option>
+                    <!-- Filled later from trade-data.js -->
+                </select>
+            </div>
+
+            <div>
+                <label>Cargo Worth</label>
+                <input
+                    type="number"
+                    id="cargoWorth"
+                    value="0"
+                    readonly>
+            </div>
+
+        </div>
+
+        <label for="stolenCargo">Stolen Cargo</label>
+        <textarea
+            id="stolenCargo"
+            rows="3"
+            placeholder="Record stolen cargo here..."></textarea>
+
+        <label for="routeNotes">Route Notes</label>
+        <textarea
+            id="routeNotes"
+            rows="3"
+            placeholder="Anything else worth remembering..."></textarea>
+
+        <div class="button-row">
+
+            <button id="finishRouteButton">
+                Finish Route
+            </button>
+
+            <button id="shipSunkButton" class="danger">
+                Ship Sunk
+            </button>
+
+            <button id="clearRouteButton">
+                Clear Current Route
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- Treasure Hints -->
+
+    <section class="card">
+
+        <h2>Treasure Hints</h2>
+
+        <textarea
+            id="treasureHints"
+            rows="10"
+            placeholder="Write down treasure clues..."></textarea>
+
+    </section>
+
+
+    <!-- Statistics -->
+
+    <section class="card">
+
+        <h2>Voyage Statistics</h2>
+
+        <div class="stats-grid">
+
+            <div>
+                <label>Completed Routes</label>
+                <div id="completedRoutes" class="display-value">0</div>
+            </div>
+
+            <div>
+                <label>Ships Lost</label>
+                <div id="shipsLost" class="display-value">0</div>
+            </div>
+
+            <div>
+                <label>Total Earnings</label>
+                <div id="totalEarnings" class="display-value">$0</div>
+            </div>
+
+            <div>
+                <label>Largest Cargo</label>
+                <div id="largestCargo" class="display-value">$0</div>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- History -->
+
+    <section class="card">
+
+        <h2>Trade History</h2>
+
+        <div id="historyContainer">
+
+            <p class="placeholder">
+                No voyages recorded yet.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Controls -->
+
+    <section class="card">
+
+        <h2>Game Controls</h2>
+
+        <div class="button-row">
+
+            <button id="exportButton">
+                Export Save
+            </button>
+
+            <button id="importButton">
+                Import Save
+            </button>
+
+            <button id="resetButton" class="danger">
+                Reset Game
+            </button>
+
+        </div>
+
+        <input
+            type="file"
+            id="importFile"
+            accept=".json"
+            hidden>
+
+    </section>
+
+</main>
+
+<footer>
+
+    <p>
+        Swashbuckled Companion
+    </p>
+
+</footer>
+
+</body>
+</html>
