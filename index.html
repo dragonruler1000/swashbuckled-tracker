@@ -106,6 +106,14 @@
                     value="0"
                     readonly>
             </div>
+            <div>
+                        <label for="stolenCargoValue">Stolen Cargo Value</label>
+        <input
+            type="number"
+            id="stolenCargoValue"
+            min="0"
+            value="0">
+            </div>
 
         </div>
 
@@ -115,6 +123,8 @@
             rows="3"
             placeholder="Record stolen cargo here..."></textarea>
 
+
+
         <label for="routeNotes">Route Notes</label>
         <textarea
             id="routeNotes"
@@ -123,8 +133,8 @@
 
         <div class="button-row">
 
-            <button id="finishRouteButton">
-                Finish Route
+            <button id="startFinishButton">
+                Start Route
             </button>
 
             <button id="shipSunkButton" class="danger">
@@ -146,10 +156,38 @@
 
         <h2>Treasure Hints</h2>
 
-        <textarea
-            id="treasureHints"
-            rows="10"
-            placeholder="Write down treasure clues..."></textarea>
+        <div class="hints-grid">
+
+            <div class="hint-item">
+                <input type="number" id="hint1" min="0" value="0">
+                <div class="hint-types">
+                    <label><input type="radio" name="hint1Type" value="unknown" checked> Unknown</label>
+                    <label><input type="radio" name="hint1Type" value="port"> Port</label>
+                    <label><input type="radio" name="hint1Type" value="continent"> Continent</label>
+                </div>
+            </div>
+
+            <div class="hint-item">
+                <input type="number" id="hint2" min="0" value="0">
+                <div class="hint-types">
+                    <label><input type="radio" name="hint2Type" value="unknown" checked> Unknown</label>
+                    <label><input type="radio" name="hint2Type" value="port"> Port</label>
+                    <label><input type="radio" name="hint2Type" value="continent"> Continent</label>
+                </div>
+            </div>
+
+            <div class="hint-item">
+                <input type="number" id="hint3" min="0" value="0">
+                <div class="hint-types">
+                    <label><input type="radio" name="hint3Type" value="unknown" checked> Unknown</label>
+                    <label><input type="radio" name="hint3Type" value="port"> Port</label>
+                    <label><input type="radio" name="hint3Type" value="continent"> Continent</label>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="treasureLocations" class="display-value">Possible treasure locations will appear here.</div>
 
     </section>
 

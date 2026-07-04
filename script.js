@@ -23,9 +23,13 @@ const commodity = document.getElementById("commodity");
 const cargoWorth = document.getElementById("cargoWorth");
 
 const stolenCargo = document.getElementById("stolenCargo");
+const stolenCargoValue = document.getElementById("stolenCargoValue");
 const routeNotes = document.getElementById("routeNotes");
 
-const treasureHints = document.getElementById("treasureHints");
+const hint1 = document.getElementById("hint1");
+const hint2 = document.getElementById("hint2");
+const hint3 = document.getElementById("hint3");
+const treasureLocations = document.getElementById("treasureLocations");
 
 const completedRoutes = document.getElementById("completedRoutes");
 const shipsLost = document.getElementById("shipsLost");
@@ -33,6 +37,8 @@ const totalEarnings = document.getElementById("totalEarnings");
 const largestCargo = document.getElementById("largestCargo");
 
 const historyContainer = document.getElementById("historyContainer");
+
+let routeStarted = false;
 
 const continents = [
     "",
@@ -56,7 +62,10 @@ let gameData = {
 
     history: [],
 
-    treasureHints: "",
+    treasureHints: {
+        values: [0,0,0],
+        types: ['unknown','unknown','unknown']
+    },
 
     stats: {
 
@@ -164,7 +173,15 @@ function saveGame(){
 
     gameData.cash = Number(cash.value);
 
-    gameData.treasureHints = treasureHints.value;
+    // save treasure hints values and selected types
+    const t1 = document.querySelector('input[name="hint1Type"]:checked')?.value || 'unknown';
+    const t2 = document.querySelector('input[name="hint2Type"]:checked')?.value || 'unknown';
+    const t3 = document.querySelector('input[name="hint3Type"]:checked')?.value || 'unknown';
+
+    gameData.treasureHints = {
+        values: [Number(hint1.value) || 0, Number(hint2.value) || 0, Number(hint3.value) || 0],
+        types: [t1, t2, t3]
+    };
 
     localStorage.setItem(
         SAVE_KEY,
@@ -189,7 +206,18 @@ function loadGame(){
 
     cash.value = gameData.cash;
 
-    treasureHints.value = gameData.treasureHints;
+    // load treasure hints (values and types)
+    if(gameData.treasureHints && Array.isArray(gameData.treasureHints.values)){
+        const vals = gameData.treasureHints.values;
+        hint1.value = vals[0] ?? 0;
+        hint2.value = vals[1] ?? 0;
+        hint3.value = vals[2] ?? 0;
+        const types = gameData.treasureHints.types || [];
+        if(types[0]) document.querySelector(`input[name=\"hint1Type\"][value=\"${types[0]}\"]`).checked = true;
+        if(types[1]) document.querySelector(`input[name=\"hint2Type\"][value=\"${types[1]}\"]`).checked = true;
+        if(types[2]) document.querySelector(`input[name=\"hint3Type\"][value=\"${types[2]}\"]`).checked = true;
+    }
+    computeTreasureLocations();
 
     routeNumber.textContent = gameData.routeNumber;
 
@@ -214,13 +242,16 @@ function loadGame(){
 // ---------- Auto Save ----------
 
 [
-treasureHints,
+hint1,
+hint2,
+hint3,
 startContinent,
 startPort,
 destinationContinent,
 destinationPort,
 commodity,
 stolenCargo,
+stolenCargoValue,
 routeNotes
 
 ].forEach(element => {
@@ -228,11 +259,20 @@ routeNotes
     element.addEventListener("input", () => {
 
         updateCargoWorth();
+        computeTreasureLocations();
 
         saveGame();
 
     });
 
+});
+
+// radio change listeners for hint types
+document.querySelectorAll('input[name="hint1Type"], input[name="hint2Type"], input[name="hint3Type"]').forEach(r => {
+    r.addEventListener('change', () => {
+        computeTreasureLocations();
+        saveGame();
+    });
 });
 
 /*
@@ -260,6 +300,7 @@ function saveCurrentRoute(){
         cargoWorth: Number(cargoWorth.value),
 
         stolenCargo: stolenCargo.value,
+        stolenValue: Number(stolenCargoValue ? stolenCargoValue.value : 0),
 
         notes: routeNotes.value
 
@@ -296,8 +337,59 @@ function loadCurrentRoute(){
     stolenCargo.value =
         gameData.currentRoute.stolenCargo;
 
+    if(typeof gameData.currentRoute.stolenValue !== 'undefined'){
+        stolenCargoValue.value = gameData.currentRoute.stolenValue;
+    } else {
+        stolenCargoValue.value = 0;
+    }
+
     routeNotes.value =
         gameData.currentRoute.notes;
+
+}
+
+
+// ---------- Treasure Hint Computation ----------
+
+function computeTreasureLocations(){
+
+    const vals = [Number(hint1.value)||0, Number(hint2.value)||0, Number(hint3.value)||0];
+    const types = [
+        document.querySelector('input[name="hint1Type"]:checked')?.value || 'unknown',
+        document.querySelector('input[name="hint2Type"]:checked')?.value || 'unknown',
+        document.querySelector('input[name="hint3Type"]:checked')?.value || 'unknown'
+    ];
+
+    const continentIndex = types.findIndex(t => t === 'continent');
+
+    let continentText = null;
+    if(continentIndex !== -1){
+        const cid = vals[continentIndex];
+        if(cid >=1 && cid <=6){
+            continentText = `${cid} - ${continents[cid]}`;
+        }
+    }
+
+    // sum the other two values to get port number
+    let portNum = null;
+    const others = [];
+    for(let i=0;i<3;i++){
+        if(i !== continentIndex) others.push(vals[i]);
+    }
+    if(others.length === 2){
+        portNum = others[0] + others[1];
+    }
+
+    if(!continentText && !portNum){
+        treasureLocations.textContent = "No valid treasure clues selected.";
+        return;
+    }
+
+    let out = "";
+    if(continentText) out += `Continent: ${continentText}`;
+    if(portNum !== null) out += (out? ' | ' : '') + `Port: ${portNum}`;
+
+    treasureLocations.textContent = out;
 
 }
 
@@ -353,7 +445,7 @@ function refreshHistory(){
                 <br>
 
                 <strong>Stolen:</strong>
-                ${entry.stolen || "None"}
+                ${entry.stolen || "None"} ${entry.stolenValue ? '(' + formatMoney(entry.stolenValue) + ')' : ''}
 
                 <br>
 
@@ -400,9 +492,12 @@ function clearCurrentRoute(){
     cargoWorth.value = 0;
 
     stolenCargo.value = "";
+    stolenCargoValue.value = 0;
     routeNotes.value = "";
 
     saveCurrentRoute();
+    routeStarted = false;
+    if(typeof startFinishButton !== 'undefined') startFinishButton.textContent = "Start Route";
     saveGame();
 
 }
@@ -430,19 +525,23 @@ function finishRoute(){
         commodity.value,
         Number(startContinent.value),
         Number(destinationContinent.value)
-);
+    );
 
-    gameData.cash += worth;
+    const stolenVal = Number(stolenCargoValue.value) || 0;
+
+    const totalGain = worth + stolenVal;
+
+    gameData.cash += totalGain;
 
     cash.value = gameData.cash;
 
     gameData.stats.completedRoutes++;
 
-    gameData.stats.totalEarnings += worth;
+    gameData.stats.totalEarnings += totalGain;
 
-    if(worth > gameData.stats.largestCargo){
+    if(totalGain > gameData.stats.largestCargo){
 
-        gameData.stats.largestCargo = worth;
+        gameData.stats.largestCargo = totalGain;
 
     }
 
@@ -463,6 +562,7 @@ function finishRoute(){
         worth: worth,
 
         stolen: stolenCargo.value,
+        stolenValue: stolenVal,
 
         notes: routeNotes.value
 
@@ -643,7 +743,10 @@ function resetGame(){
 
         history: [],
 
-        treasureHints: "",
+        treasureHints: {
+            values: [0,0,0],
+            types: ['unknown','unknown','unknown']
+        },
 
         currentRoute: {},
 
@@ -660,7 +763,13 @@ function resetGame(){
 
     cash.value = 0;
 
-    treasureHints.value = "";
+    hint1.value = 0;
+    hint2.value = 0;
+    hint3.value = 0;
+    document.querySelectorAll('input[name="hint1Type"]').forEach(i => i.checked = i.value === 'unknown');
+    document.querySelectorAll('input[name="hint2Type"]').forEach(i => i.checked = i.value === 'unknown');
+    document.querySelectorAll('input[name="hint3Type"]').forEach(i => i.checked = i.value === 'unknown');
+    computeTreasureLocations();
 
     completedRoutes.textContent = 0;
 
@@ -685,12 +794,29 @@ function resetGame(){
 
 // ---------- Button Events ----------
 
-document
-.getElementById("finishRouteButton")
-.addEventListener(
-    "click",
-    finishRoute
-);
+const startFinishButton = document.getElementById("startFinishButton");
+startFinishButton.addEventListener("click", () => {
+    if(!routeStarted){
+        const cargo = Number(cargoWorth.value) || 0;
+        const fee = Math.floor(cargo * 0.10);
+
+        gameData.cash -= fee;
+        if(gameData.cash < 0) gameData.cash = 0;
+
+        cash.value = gameData.cash;
+        updateBuyback();
+        saveGame();
+
+        routeStarted = true;
+        startFinishButton.textContent = "Finish Route";
+    }
+    else{
+        // finish route
+        finishRoute();
+        routeStarted = false;
+        startFinishButton.textContent = "Start Route";
+    }
+});
 
 document
 .getElementById("shipSunkButton")
@@ -767,6 +893,7 @@ destinationPort,
 commodity,
 cargoWorth,
 stolenCargo,
+    stolenCargoValue,
 routeNotes
 
 ].forEach(element => {
