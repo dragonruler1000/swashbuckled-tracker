@@ -56,7 +56,7 @@ const continents = [
 
 let gameData = {
 
-    cash: 0,
+    cash: 10000,
 
     routeNumber: 1,
 
@@ -360,36 +360,88 @@ function computeTreasureLocations(){
         document.querySelector('input[name="hint3Type"]:checked')?.value || 'unknown'
     ];
 
-    const continentIndex = types.findIndex(t => t === 'continent');
+    const required = { continent: 1, port: 2 };
+    const confirmed = { continent: 0, port: 0 };
+    const unknownIndexes = [];
 
-    let continentText = null;
-    if(continentIndex !== -1){
-        const cid = vals[continentIndex];
-        if(cid >=1 && cid <=6){
-            continentText = `${cid} - ${continents[cid]}`;
+    types.forEach((type, index) => {
+        if(type === 'continent' || type === 'port'){
+            confirmed[type]++;
+        } else {
+            unknownIndexes.push(index);
+        }
+    });
+
+    if(confirmed.continent > required.continent || confirmed.port > required.port){
+        treasureLocations.textContent = "Invalid clue selections.";
+        return;
+    }
+
+    const remaining = {
+        continent: required.continent - confirmed.continent,
+        port: required.port - confirmed.port
+    };
+
+    const assignments = [];
+
+    function assignUnknown(index, left){
+        if(index === unknownIndexes.length){
+            assignments.push([...types]);
+            return;
+        }
+
+        const pos = unknownIndexes[index];
+
+        if(left.continent > 0){
+            types[pos] = 'continent';
+            assignUnknown(index + 1, { continent: left.continent - 1, port: left.port });
+        }
+
+        if(left.port > 0){
+            types[pos] = 'port';
+            assignUnknown(index + 1, { continent: left.continent, port: left.port - 1 });
         }
     }
 
-    // sum the other two values to get port number
-    let portNum = null;
-    const others = [];
-    for(let i=0;i<3;i++){
-        if(i !== continentIndex) others.push(vals[i]);
-    }
-    if(others.length === 2){
-        portNum = others[0] + others[1];
-    }
+    assignUnknown(0, remaining);
 
-    if(!continentText && !portNum){
+    const results = [];
+
+    assignments.forEach(assign => {
+        const continentIndex = assign.findIndex(t => t === 'continent');
+        const portVals = [];
+        assign.forEach((t, i) => {
+            if(t === 'port') portVals.push(vals[i]);
+        });
+
+        if(continentIndex === -1 || portVals.length !== 2) return;
+
+        const continentId = vals[continentIndex];
+        if(continentId < 1 || continentId > 6) return;
+
+        const portNumber = portVals[0] + portVals[1];
+        results.push({ continentId, portNumber });
+    });
+
+    if(results.length === 0){
         treasureLocations.textContent = "No valid treasure clues selected.";
         return;
     }
 
-    let out = "";
-    if(continentText) out += `Continent: ${continentText}`;
-    if(portNum !== null) out += (out? ' | ' : '') + `Port: ${portNum}`;
+    const uniqueResults = [];
+    const seen = new Set();
+    results.forEach(result => {
+        const key = `${result.continentId}-${result.portNumber}`;
+        if(!seen.has(key)){
+            seen.add(key);
+            uniqueResults.push(result);
+        }
+    });
 
-    treasureLocations.textContent = out;
+    treasureLocations.textContent = uniqueResults.map((result, index) => {
+        const continentText = `${result.continentId} - ${continents[result.continentId]}`;
+        return `${index + 1}) Continent: ${continentText} | Port: ${result.portNumber}`;
+    }).join("\n");
 
 }
 
@@ -451,6 +503,23 @@ function refreshHistory(){
 
                 <strong>Notes:</strong>
                 ${entry.notes || "-"}
+
+            `;
+
+        }
+
+        else if(entry.type === "treasure"){
+
+            div.innerHTML = `
+
+                <h3>🏴‍☠️ Treasure Found</h3>
+
+                Bonus:
+                ${formatMoney(entry.amount)}
+
+                <br>
+
+                ${entry.note}
 
             `;
 
@@ -816,6 +885,28 @@ startFinishButton.addEventListener("click", () => {
         routeStarted = false;
         startFinishButton.textContent = "Start Route";
     }
+});
+
+const findTreasureButton = document.getElementById("findTreasureButton");
+findTreasureButton.addEventListener("click", () => {
+    const bonus = 50000;
+    gameData.cash += bonus;
+    cash.value = gameData.cash;
+
+    gameData.stats.totalEarnings += bonus;
+    totalEarnings.textContent = formatMoney(gameData.stats.totalEarnings);
+
+    updateBuyback();
+    saveGame();
+
+    const entry = {
+        type: "treasure",
+        amount: bonus,
+        note: "Treasure found"
+    };
+
+    gameData.history.push(entry);
+    refreshHistory();
 });
 
 document

@@ -221,6 +221,11 @@ textarea{
     color:var(--accent);
 }
 
+#treasureLocations{
+    white-space: pre-line;
+    display:block;
+}
+
 
 /* ==========================
    Buttons
